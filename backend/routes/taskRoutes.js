@@ -8,7 +8,7 @@ const {
   updateTaskStatus,
   updateTask,
   deleteTask,
-} = require("../controllers/taskController");
+} = require("../controllers/TaskController");
 
 const authMiddleware = require("../middleware/AuthMiddleware");
 const allowRoles = require("../middleware/RoleMiddleware");
