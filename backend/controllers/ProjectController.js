@@ -139,31 +139,78 @@ const createProject = (req, res) => {
 // Get all projects
 const getProjects = (req, res) => {
   try {
-    const projects = db
-      .prepare(
-        `
-            SELECT
-                projects.*,
-                clients.name AS client_name,
-                users.name AS freelancer_name
-            FROM projects
-            JOIN clients
-                ON projects.client_id = clients.id
-            JOIN users
-                ON projects.freelancer_id = users.id
-            ORDER BY projects.id DESC
-        `,
-      )
-      .all();
+    let projects;
 
-    res.status(200).json({
-      projects,
+    // Admin can see all projects
+    if (req.user.role === "admin") {
+      projects = db
+        .prepare(
+          `
+                SELECT
+                    projects.*,
+                    clients.name AS client_name,
+                    users.name AS freelancer_name
+                FROM projects
+                JOIN clients
+                    ON projects.client_id = clients.id
+                JOIN users
+                    ON projects.freelancer_id = users.id
+                ORDER BY projects.id DESC
+            `,
+        )
+        .all();
+    }
+
+    // Freelancer sees only projects assigned to them
+    else if (req.user.role === "freelancer") {
+      projects = db
+        .prepare(
+          `
+                SELECT
+                    projects.*,
+                    clients.name AS client_name,
+                    users.name AS freelancer_name
+                FROM projects
+                JOIN clients
+                    ON projects.client_id = clients.id
+                JOIN users
+                    ON projects.freelancer_id = users.id
+                WHERE projects.freelancer_id = ?
+                ORDER BY projects.id DESC
+            `,
+        )
+        .all(req.user.id);
+    }
+
+    // Client sees only their own projects
+    else if (req.user.role === "client") {
+      projects = db
+        .prepare(
+          `
+                SELECT
+                    projects.*,
+                    clients.name AS client_name,
+                    users.name AS freelancer_name
+                FROM projects
+                JOIN clients
+                    ON projects.client_id = clients.id
+                JOIN users
+                    ON projects.freelancer_id = users.id
+                WHERE clients.user_id = ?
+                ORDER BY projects.id DESC
+            `,
+        )
+        .all(req.user.id);
+    }
+
+    return res.status(200).json({
+      projects: projects,
     });
   } catch (error) {
     console.error("Get projects error:", error);
 
-    res.status(500).json({
-      message: "Failed to get projects",
+    return res.status(500).json({
+      message: "Failed to fetch projects",
     });
   }
 };

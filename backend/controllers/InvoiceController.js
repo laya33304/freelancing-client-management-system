@@ -132,31 +132,88 @@ const createInvoice = (req, res) => {
 
 // Get all invoices
 const getInvoices = (req, res) => {
-  try {
-    const invoices = db
-      .prepare(
-        `
+
+    try {
+
+        let invoices;
+
+        // Admin sees all invoices
+        if (req.user.role === "admin") {
+
+            invoices = db.prepare(`
                 SELECT
                     invoices.*,
-                    projects.title AS project_title
+                    projects.title AS project_title,
+                    clients.name AS client_name,
+                    users.name AS freelancer_name
                 FROM invoices
                 JOIN projects
                     ON invoices.project_id = projects.id
+                JOIN clients
+                    ON projects.client_id = clients.id
+                JOIN users
+                    ON projects.freelancer_id = users.id
                 ORDER BY invoices.id DESC
-            `,
-      )
-      .all();
+            `).all();
 
-    res.status(200).json({
-      invoices,
-    });
-  } catch (error) {
-    console.error("Get invoices error:", error);
+        }
 
-    res.status(500).json({
-      message: "Failed to get invoices",
-    });
-  }
+        // Freelancer sees invoices of their projects
+        else if (req.user.role === "freelancer") {
+
+            invoices = db.prepare(`
+                SELECT
+                    invoices.*,
+                    projects.title AS project_title,
+                    clients.name AS client_name,
+                    users.name AS freelancer_name
+                FROM invoices
+                JOIN projects
+                    ON invoices.project_id = projects.id
+                JOIN clients
+                    ON projects.client_id = clients.id
+                JOIN users
+                    ON projects.freelancer_id = users.id
+                WHERE projects.freelancer_id = ?
+                ORDER BY invoices.id DESC
+            `).all(req.user.id);
+
+        }
+
+        // Client sees invoices of their projects
+        else if (req.user.role === "client") {
+
+            invoices = db.prepare(`
+                SELECT
+                    invoices.*,
+                    projects.title AS project_title,
+                    clients.name AS client_name,
+                    users.name AS freelancer_name
+                FROM invoices
+                JOIN projects
+                    ON invoices.project_id = projects.id
+                JOIN clients
+                    ON projects.client_id = clients.id
+                JOIN users
+                    ON projects.freelancer_id = users.id
+                WHERE clients.user_id = ?
+                ORDER BY invoices.id DESC
+            `).all(req.user.id);
+
+        }
+
+        return res.status(200).json({
+            invoices: invoices
+        });
+
+    } catch (error) {
+
+        console.error("Get invoices error:", error);
+
+        return res.status(500).json({
+            message: "Failed to fetch invoices"
+        });
+    }
 };
 
 // Get invoice by ID

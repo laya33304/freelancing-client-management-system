@@ -10,19 +10,42 @@ const {
   deleteClient,
 } = require("../controllers/ClientController");
 
+const authMiddleware = require("../middleware/AuthMiddleware");
+const allowRoles = require("../middleware/RoleMiddleware");
+
 // POST /api/clients
-router.post("/", createClient);
+router.post(
+  "/",
+  authMiddleware,
+  allowRoles("freelancer", "admin"),
+  createClient,
+);
 
 // GET /api/clients
-router.get("/", getClients);
+router.get("/", authMiddleware, allowRoles("freelancer", "admin"), getClients);
 
 // GET /api/clients/:id
-router.get("/:id", getClientById);
+router.get(
+  "/:id",
+  authMiddleware,
+  allowRoles("freelancer", "admin"),
+  getClientById,
+);
 
 // PUT /api/clients/:id
-router.put("/:id", updateClient);
+router.put(
+  "/:id",
+  authMiddleware,
+  allowRoles("freelancer", "admin"),
+  updateClient,
+);
 
 // DELETE /api/clients/:id
-router.delete("/:id", deleteClient);
+router.delete(
+  "/:id",
+  authMiddleware,
+  allowRoles("freelancer", "admin"),
+  deleteClient,
+);
 
 module.exports = router;

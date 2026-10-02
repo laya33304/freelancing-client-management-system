@@ -9,15 +9,46 @@ const {
   updateProject,
   deleteProject,
 } = require("../controllers/ProjectController");
+const authMiddleware = require("../middleware/AuthMiddleware");
+const allowRoles = require("../middleware/RoleMiddleware");
+const { projectAccess } = require("../middleware/ResourceMiddleware");
 
-router.post("/", createProject);
+router.post(
+  "/",
+  authMiddleware,
+  allowRoles("freelancer", "admin"),
+  createProject,
+);
 
-router.get("/", getProjects);
+router.get(
+  "/",
+  authMiddleware,
+  allowRoles("freelancer", "client", "admin"),
+  getProjects,
+);
 
-router.get("/:id", getProjectById);
+router.get(
+  "/:id",
+  authMiddleware,
+  allowRoles("freelancer", "client", "admin"),
+  projectAccess,
+  getProjectById,
+);
 
-router.put("/:id", updateProject);
+router.put(
+  "/:id",
+  authMiddleware,
+  allowRoles("freelancer", "admin"),
+  projectAccess,
+  updateProject,
+);
 
-router.delete("/:id", deleteProject);
+router.delete(
+  "/:id",
+  authMiddleware,
+  allowRoles("freelancer", "admin"),
+  projectAccess,
+  deleteProject,
+);
 
 module.exports = router;
