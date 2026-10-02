@@ -12,7 +12,7 @@ const invoiceRoutes = require("./routes/invoiceRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const attachmentRoutes = require("./routes/attachmentRoutes");
-const historyRoutes = require("./routes/historyRoutes");
+const historyRoutes = require("./routes/HistoryRoutes");
 const authRoutes = require("./routes/authRoutes");
 
 app.use(cors());
